@@ -21,3 +21,5 @@ python [ファイル名]
 7. Concatenate public key and checksum
 8. Encoding the key with Base58
 
+## Flaskについて
+https://msiz07-flask-docs-ja.readthedocs.io/ja/latest/

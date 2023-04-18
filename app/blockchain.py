@@ -1,9 +1,11 @@
 # パッケージ群
+import contextlib
 import hashlib
 import json
 import logging
 import sys
 import time
+import threading
 
 # サードパーティ群
 from ecdsa import NIST256p
@@ -15,6 +17,7 @@ import utils
 MINING_DIFFICULTY = 3
 MINING_SENDER = 'THE BLOCKCHAIN'
 MINING_REWARD = 1.0
+MINING_TIMER_SEC = 20
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 logger = logging.getLogger(__name__)
@@ -26,11 +29,14 @@ logger = logging.getLogger(__name__)
 #     ・正しいナンスの取得する
 #     ・ナンスと最新のブロック（チェーン先のブロック）のハッシュ値を使ってブロックを生成する
 class BlockChain(object):
-    def __init__(self, blockchain_address=None):
+    def __init__(self, blockchain_address=None, port=None):
         self.transaction_pool = []
         self.chain = []
         self.create_block(0, self.hash({}))
         self.blockchain_address = blockchain_address
+        self.port = port
+        # 並列処理のプロセス数
+        self.mining_semaphore = threading.Semaphore(1)
 
     #ブロックの追加
     def create_block(self, nonce, previous_hash):
@@ -48,16 +54,16 @@ class BlockChain(object):
     def hash(self, block):
         sorted_block = json.dumps(block, sort_keys=True)
         return hashlib.sha256(sorted_block.encode()).hexdigest()
-    
+
     # トランザクションプールからブロックを追加
     def add_transaction(
-            self,
-            sender_blockchain_address,
-            recipient_blockchain_address,
-            value,
-            sender_public_key=None,
-            signature=None
-        ):
+        self,
+        sender_blockchain_address,
+        recipient_blockchain_address,
+        value,
+        sender_public_key=None,
+        signature=None
+    ):
         transaction = utils.sorted_dict_by_key({
             'sender_blockchain_address': sender_blockchain_address,
             'recipient_blockchain_address': recipient_blockchain_address,
@@ -73,7 +79,28 @@ class BlockChain(object):
             self.transaction_pool.append(transaction)
             return True
         return False
-    
+
+    # トランザクションプールからブロックを追加
+    def create_transaction(
+        self,
+        sender_blockchain_address,
+        recipient_blockchain_address,
+        value,
+        sender_public_key,
+        signature
+    ):
+        is_transacted = self.add_transaction(
+            sender_blockchain_address,
+            recipient_blockchain_address,
+            value,
+            sender_public_key,
+            signature
+        )
+        # TODO
+        # Sync
+
+        return is_transacted
+
     def verify_transaction_signature(
         self,
         sender_public_key,
@@ -90,7 +117,7 @@ class BlockChain(object):
         verified_key = verifying_key.verify(signature_bytes, message)
         return verified_key
 
-    
+
     # ナンスの判定（ハッシュ値の先頭が'000'となれば正解とする）
     def valid_proof(self, transactions, previous_hash, nonce, difficulty=MINING_DIFFICULTY):
         guess_block = utils.sorted_dict_by_key({
@@ -100,7 +127,7 @@ class BlockChain(object):
         })
         guess_hash = self.hash(guess_block)
         return guess_hash[:difficulty] == '0' * difficulty
-    
+
     # ナンスの生成
     def proof_of_work(self):
         # 生成ブロックするトランザクション
@@ -112,7 +139,7 @@ class BlockChain(object):
         while self.valid_proof(transactions, previous_hash, nonce) is False:
             nonce += 1
         return nonce
-    
+
     # マイニング
     def mining(self):
         nonce = self.proof_of_work()
@@ -125,7 +152,7 @@ class BlockChain(object):
         self.create_block(nonce, previous_hash)
         logger.info({'action': 'mining', 'status': 'success'})
         return True
-    
+
     # 仮想通貨の合計値を取得
     def calculate_total_amount(self, blockchain_address):
         total_amount = 0.0
@@ -138,6 +165,15 @@ class BlockChain(object):
                     total_amount -= value
         return total_amount
 
+    # 20sec毎にマイニング開始
+    def start_mining(self):
+        is_acquire = self.mining_semaphore.acquire(blocking=False)
+        if is_acquire:
+            with contextlib.ExitStack() as stack:
+                stack.callback(self.mining_semaphore.release)
+                self.mining()
+                loop = threading.Timer(MINING_TIMER_SEC, self.start_mining)
+                loop.start()
 
 # if __name__ == '__main__':
 #     my_blockchain_address = 'my_blockchain_address'
