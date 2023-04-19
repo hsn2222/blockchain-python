@@ -72,7 +72,7 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument('-p', '--port', default=8000, type=int, help='port to listen on')
-    parser.add_argument('-g', '--gw', default='http://127.0.0.1:5000', type=str, help='blockchain gateway')
+    parser.add_argument('-g', '--gw', default='http://127.0.0.1:5001', type=str, help='blockchain gateway')
     args = parser.parse_args()
     port = args.port
     app.config['gw'] = args.gw

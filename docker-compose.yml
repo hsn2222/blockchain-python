@@ -11,6 +11,8 @@ services:
         target: "/app"
     working_dir: /app
     ports:
-      - "5001:5000"
+      - "5001:5001"
+      - "5002:5002"
+      - "5003:5003"
       - "8080:8000"
     tty: true
