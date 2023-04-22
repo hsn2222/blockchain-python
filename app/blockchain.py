@@ -266,9 +266,6 @@ class BlockChain(object):
         logger.info({'action': 'resolve_conflicts', 'status': 'not_replaced'})
         return False
 
-
-
-
 # if __name__ == '__main__':
 #     my_blockchain_address = 'my_blockchain_address'
 
