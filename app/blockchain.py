@@ -47,10 +47,14 @@ class BlockChain(object):
         self.mining_semaphore = threading.Semaphore(1)
         self.sync_neighbours_semaphore = threading.Semaphore(1)
 
+    # 自動実行
     def run(self):
+        # 他ノードの登録
         self.sync_neighbours()
+        # ブロックの同期
         self.resolve_conflicts()
-        # self.start_mining()
+        # マイニング
+        self.start_mining()
 
     def set_neighbours(self):
         self.neighbours = utils.find_neighbours(
@@ -105,9 +109,10 @@ class BlockChain(object):
             self.transaction_pool.append(transaction)
             return True
         if self.verify_transaction_signature(sender_public_key, signature, transaction):
-            # if self.calculate_total_amount(sender_blockchain_address) < float(value):
-            #     logger.error({'action': 'add_transaction', 'error': 'no_value'})
-            #     return False
+            # 残高なしは送信不可
+            if self.calculate_total_amount(sender_blockchain_address) < float(value):
+                logger.error({'action': 'add_transaction', 'error': 'no_value'})
+                return False
             self.transaction_pool.append(transaction)
             return True
         return False
@@ -185,8 +190,8 @@ class BlockChain(object):
 
     # マイニング
     def mining(self):
-        if not self.transaction_pool:
-            return False
+        # if not self.transaction_pool:
+        #     return False
         self.add_transaction(
             sender_blockchain_address=MINING_SENDER,
             recipient_blockchain_address=self.blockchain_address,

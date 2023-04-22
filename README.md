@@ -11,6 +11,24 @@ pip3 install -r requirements.txt
 python [ファイル名]
 ```
 
+### ブロックチェーンノードの起動
+```
+# デフォルトポート（5001）で起動
+python python blockchain_server.py
+
+# 指定ポート（5002）で起動
+python python blockchain_server.py -p 5002
+```
+
+### ウォレットの起動
+```
+# デフォルトポート（8080）で起動 & 接続ノードがデフォルト（http://127.0.0.1:5001）
+python python wallet_server.py
+
+# 指定ポート（8081）で起動 & 接続ノードを指定（http://127.0.0.1:5002）
+python python wallet_server.py -p 8081 -g http://127.0.0.1:5002
+```
+
 ## ビットコインのブロックチェーンアドレスの生成手順
 1. Creating a public key with ECDSA
 2. SHA-256 for the public key
