@@ -10,7 +10,8 @@ import wallet
 
 app = Flask(__name__, template_folder='./templates')
 
-@app.route('/', methods=['GET'])
+@app.route('/')
+# @app.route('/', methods=['GET'])
 def index():
     return render_template('./index.html')
 
@@ -26,6 +27,8 @@ def create_wallet():
 
 @app.route('/transaction', methods=['POST'])
 def create_transaction():
+    app.logger.info(111111111111111222222222222222222222)
+    app.logger.info('transaction transaction transaction transaction')
     request_json = request.json
     required = (
         'sender_private_key',
@@ -41,7 +44,7 @@ def create_transaction():
     sender_blockchain_address = request_json['sender_blockchain_address']
     recipient_blockchain_address = request_json['recipient_blockchain_address']
     sender_public_key = request_json['sender_public_key']
-    value = request_json['value']
+    value = float(request_json['value'])
 
     transaction = wallet.Transaction(
         sender_private_key,
@@ -58,6 +61,7 @@ def create_transaction():
         'signature': transaction.generate_signature(),
     }
 
+    app.logger.info('post post post post post')
     response = requests.post(
         urllib.parse.urljoin(app.config['gw'], 'transactions'),
         json=json_data,
@@ -71,7 +75,7 @@ def create_transaction():
 if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    parser.add_argument('-p', '--port', default=8000, type=int, help='port to listen on')
+    parser.add_argument('-p', '--port', default=8080, type=int, help='port to listen on')
     parser.add_argument('-g', '--gw', default='http://127.0.0.1:5001', type=str, help='blockchain gateway')
     args = parser.parse_args()
     port = args.port

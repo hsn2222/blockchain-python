@@ -2,10 +2,12 @@ from flask import Flask
 from flask import jsonify
 from flask import request
 
+import logging
 import blockchain
 import wallet
 
 app = Flask(__name__)
+logger = logging.getLogger(__name__)
 
 # ウォレット情報の保持(通常はDBに保存しておく)
 cache = {}
@@ -17,7 +19,7 @@ def get_blockchain():
             blockchain_address=miners_wallet.blockchain_address,
             port=app.config['port']
         )
-        app.logger.warning({
+        logger.warning({
             'private_key': miners_wallet.private_key,
             'public_key': miners_wallet.public_key,
             'blockchain_address': miners_wallet.blockchain_address
@@ -45,13 +47,13 @@ def transaction():
 
     if request.method == 'POST':
         request_json = request.json
-        required = {
+        required = (
             'sender_blockchain_address',
             'recipient_blockchain_address',
             'value',
             'sender_public_key',
             'signature'
-        }
+        )
         if not all(k in request_json for k in required):
             return jsonify({'message': 'missing values'}), 400
 
@@ -68,13 +70,13 @@ def transaction():
 
     if request.method == 'PUT':
         request_json = request.json
-        required = {
+        required = (
             'sender_blockchain_address',
             'recipient_blockchain_address',
             'value',
             'sender_public_key',
             'signature'
-        }
+        )
         if not all(k in request_json for k in required):
             return jsonify({'message': 'missing values'}), 400
 
@@ -95,16 +97,22 @@ def transaction():
 
 @app.route('/mine', methods=['GET'])
 def mine():
-    blockchain = get_blockchain()
-    is_mined = blockchain.mining()
-    if not is_mined:
-        return jsonify({'message': 'fail'}), 400
-    return jsonify({'message': 'success'}), 200
+    block_chain = get_blockchain()
+    is_mined = block_chain.mining()
+    if is_mined:
+        return jsonify({'message': 'success'}), 200
+    return jsonify({'message': 'fail'}), 400
 
 @app.route('/mine/start', methods=['GET'])
 def start_mine():
     get_blockchain().start_mining()
     return jsonify({'message': 'success'}), 200
+
+@app.route('/consensus', methods=['PUT'])
+def consensus():
+    block_chain = get_blockchain()
+    replaced = block_chain.resolve_conflicts()
+    return jsonify({'replaced': replaced}), 200
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
@@ -116,6 +124,6 @@ if __name__ == '__main__':
 
     app.config['port'] = port
 
-    get_blockchain().sync_neighbours()
+    get_blockchain().run()
 
     app.run(host='0.0.0.0', port=port, threaded=True, debug=True)

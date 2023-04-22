@@ -19,11 +19,11 @@ class Wallet(object):
     @property
     def private_key(self):
         return self._private_key.to_string().hex()
-    
+
     @property
     def public_key(self):
         return self._public_key.to_string().hex()
-    
+
     @property
     def blockchain_address(self):
         return self._blockchain_address
@@ -35,15 +35,15 @@ class Wallet(object):
         sha256_bpk = hashlib.sha256(public_key_bytes)
         sha256_bpk_digest = sha256_bpk.digest()
         # 3. Ripemd160 for the SHA-256(shaよりも短い形に変換)
-        ripemd160_bpk = hashlib.new('ripemd160')
-        ripemd160_bpk.update(sha256_bpk_digest)
-        ripemd160_bpk_digest = ripemd160_bpk.digest()
-        print('ripemd160_bpk_digest:', ripemd160_bpk_digest)
-        ripemd160_bpk_hex = codecs.encode(ripemd160_bpk_digest, 'hex')
-        print('ripemd160_bpk_hex:', ripemd160_bpk_hex)
+        ripemed160_bpk = hashlib.new('ripemd160')
+        ripemed160_bpk.update(sha256_bpk_digest)
+        ripemed160_bpk_digest = ripemed160_bpk.digest()
+        print('ripemd160_bpk_digest:', ripemed160_bpk_digest)
+        ripemed160_bpk_hex = codecs.encode(ripemed160_bpk_digest, 'hex')
+        print('ripemd160_bpk_hex:', ripemed160_bpk_hex)
         # 4. Add network byte
         network_byte = b'00'
-        network_bitcoin_public_key = network_byte + ripemd160_bpk_hex
+        network_bitcoin_public_key = network_byte + ripemed160_bpk_hex
         network_bitcoin_public_key_bytes = codecs.decode(
             network_bitcoin_public_key, 'hex'
         )
@@ -61,7 +61,7 @@ class Wallet(object):
         blockchain_address = base58.b58encode(binascii.unhexlify(address_hex)).decode('utf-8')
 
         return blockchain_address
-    
+
 class Transaction(object):
     def __init__(
         self,
@@ -122,4 +122,3 @@ if __name__ == '__main__':
 
     print('A', block_chain.calculate_total_amount(wallet_A.blockchain_address))
     print('B', block_chain.calculate_total_amount(wallet_B.blockchain_address))
-    

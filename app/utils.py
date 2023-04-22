@@ -36,7 +36,7 @@ def is_found_host(target, port):
             logger.error({
                 'action': 'is_found_host',
                 'target': target,
-                'posrt': port,
+                'port': port,
                 'ex': ex
             })
             return False
@@ -51,7 +51,6 @@ def find_neighbours(my_host, my_port, start_ip_range, end_ip_range, start_port, 
     last_ip = m.group('last_ip')
 
     neighbours = []
-    logger.info(1111111111111111)
     for guess_port in range(start_port, end_port):
         for ip_range in range(start_ip_range, end_ip_range):
             guess_host = f'{prefix_host}{int(last_ip)+int(ip_range)}'
@@ -70,7 +69,7 @@ def get_host():
     return '127.0.0.1'
 
 if __name__ == '__main__':
-    # print(is_found_host('127.0.0.0', 5001))
+    # print(is_found_host('127.0.0.1', 5001))
 
     # IPアドレス：192.168.0.10 - 192.168.0.12 かつ ポート：5001 - 5003 まで接続確認
     # print(find_neighbours('192.168.0.10', 5001, 0, 3, 5001, 5003))
